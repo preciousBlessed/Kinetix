@@ -47,7 +47,7 @@ The agent can act through applying torque via motors and force via thrusters.
 
 <p align="middle">
   <img src="images/random_1.gif" width="200" />
-  <img src="images/random_2.gif" width="200" />
+  <img src="images/random_5.gif" width="200" />
   <img src="images/random_3.gif" width="200" />
 </p>
 <p align="middle">
