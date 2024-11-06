@@ -81,6 +81,8 @@ We find that the agent can zero-shot simple physics problems, but still struggle
 
 # 📜 Basic Usage
 
+Kinetix follows the interfaces established in [gymnax](https://github.com/RobertTLange/gymnax) and [jaxued](https://github.com/DramaCow/jaxued):
+
 ```commandline
 # Use default parameters
 env_params = EnvParams()
