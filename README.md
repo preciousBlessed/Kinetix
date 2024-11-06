@@ -43,7 +43,7 @@ You can play with Kinetix in our [online editor](https://kinetix-env.github.io/)
 
 We train a general agent on millions of procedurally generated physics tasks.
 Every task has the same goal: make the <span style="color:green">green</span> and <span style="color:blue">blue</span> touch, without <span style="color:green">green</span> touching <span style="color:red">red</span>.
-The agent can act through apply torque via motors and force via thrusters.
+The agent can act through applying torque via motors and force via thrusters.
 
 <p align="middle">
   <img src="images/random_1.gif" width="200" />
