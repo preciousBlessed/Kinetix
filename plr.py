@@ -422,7 +422,6 @@ def main(config=None):
                 )
 
         wandb.log(log_dict)
-        save_data_to_local_file(log_dict, config)
 
     def get_all_metrics(
         rng,
@@ -482,7 +481,7 @@ def main(config=None):
 
     if config["train_level_mode"] == "list":
         sample_random_level = make_reset_train_function_with_list_of_levels(
-            config, config["train_levels_list"], static_env_params, make_pcg_state=False
+            config, config["train_levels_list"], static_env_params, make_pcg_state=False, is_loading_train_levels=True
         )
     elif config["train_level_mode"] == "random":
         sample_random_level = make_reset_train_function_with_mutations(

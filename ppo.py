@@ -64,7 +64,7 @@ def make_train(config, env_params, static_env_params):
     env = make_kinetix_env_from_name(config["env_name"], static_env_params=static_env_params)
 
     if config["train_level_mode"] == "list":
-        reset_func = make_reset_train_function_with_list_of_levels(config, config["train_levels_list"], static_env_params)
+        reset_func = make_reset_train_function_with_list_of_levels(config, config["train_levels_list"], static_env_params, is_loading_train_levels=True)
     elif config["train_level_mode"] == "random":
         reset_func = make_reset_train_function_with_mutations(
             env.physics_engine, env_params, env.static_env_params, config
@@ -145,8 +145,8 @@ def make_train(config, env_params, static_env_params):
         rng, _rng = jax.random.split(rng)
         obsv, env_state = env.reset(_rng, env_params)
         init_hstate = ScannedRNN.initialize_carry(config["num_train_envs"])
-
-        pixel_renderer = jax.jit(make_render_pixels(env_params, env.static_env_params))
+        render_static_env_params = env.static_env_params.replace(downscale=1)
+        pixel_renderer = jax.jit(make_render_pixels(env_params, render_static_env_params))
         pixel_render_fn = lambda x: pixel_renderer(x) / 255.0
         eval_levels = get_eval_levels(config["eval_levels"], env.static_env_params)
 
@@ -372,7 +372,7 @@ def make_train(config, env_params, static_env_params):
                             (
                                 env_params.max_timesteps,
                                 config["num_eval_levels"],
-                                *PixelObservations(env_params, env.static_env_params)
+                                *PixelObservations(env_params, render_static_env_params)
                                 .observation_space(env_params)
                                 .shape,
                             )
@@ -407,7 +407,7 @@ def make_train(config, env_params, static_env_params):
                         for i, eval_name in enumerate(config["eval_levels"]):
                             obs_to_use = obs_vid[: idx_vid[i], i]
                             obs_to_use = np.asarray(obs_to_use).transpose(0, 3, 2, 1)[:, :, ::-1, :]
-                            to_log[f"media/eval_video_{eval_name}"] = obs_to_use
+                            to_log[f"media/eval_video_{eval_name}"] = wandb.Video((obs_to_use * 255).astype(np.uint8))
 
                     wandb.log(to_log)
 
@@ -452,14 +452,14 @@ def main(config):
 
     rng = jax.random.PRNGKey(config["seed"])
     rng, _rng = jax.random.split(rng)
-
+    print("ENV PARAMS HERE", static_env_params)
     train_jit = jax.jit(make_train(config, env_params, static_env_params))
 
     out = train_jit(_rng)
 
     if config["use_wandb"]:
         if config["save_policy"]:
-            train_state = jax.tree.map(lambda x: x[0], out["runner_state"][0])
+            train_state = jax.tree.map(lambda x: x, out["runner_state"][0])
             save_model_to_wandb(train_state, config["total_timesteps"], config)
 
 
