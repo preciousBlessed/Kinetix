@@ -409,7 +409,9 @@ def make_train(config, env_params, static_env_params):
                         for i, eval_name in enumerate(config["eval_levels"]):
                             obs_to_use = obs_vid[: idx_vid[i], i]
                             obs_to_use = np.asarray(obs_to_use).transpose(0, 3, 2, 1)[:, :, ::-1, :]
-                            to_log[f"media/eval_video_{eval_name}"] = wandb.Video((obs_to_use * 255).astype(np.uint8))
+                            to_log[f"media/eval_video_{eval_name}"] = wandb.Video(
+                                (obs_to_use * 255).astype(np.uint8), fps=15
+                            )
 
                     wandb.log(to_log)
 
