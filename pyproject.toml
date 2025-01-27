@@ -38,7 +38,7 @@ dependencies = [
     "safetensors",
     "pygame_widgets",
     "jaxgl",
-    "jax2d",
+    "jax2d==1.0.0",
     "jaxued @ git+https://github.com/DramaCow/jaxued.git@main",
     "moviepy==1.0.3",
 ]
