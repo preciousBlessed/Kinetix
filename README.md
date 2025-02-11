@@ -17,6 +17,8 @@
         <img src="https://img.shields.io/badge/docs-green" /></a>
 </p>
 
+### <b>Update: Kinetix was accepted at ICLR 2025 as an oral!</b>
+
 # Kinetix
 
 Kinetix is a framework for reinforcement learning in a 2D rigid-body physics world, written entirely in [JAX](https://github.com/jax-ml/jax).
