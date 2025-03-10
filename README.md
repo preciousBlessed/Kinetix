@@ -24,7 +24,7 @@
 Kinetix is a framework for reinforcement learning in a 2D rigid-body physics world, written entirely in [JAX](https://github.com/jax-ml/jax).
 Kinetix can represent a huge array of physics-based tasks within a unified framework.
 We use Kinetix to investigate the training of large, general reinforcement learning agents by procedurally generating millions of tasks for training.
-You can play with Kinetix in our [online editor](https://kinetix-env.github.io/), or have a look at the JAX [physics engine](https://github.com/MichaelTMatthews/Jax2D) and [graphics library](https://github.com/FLAIROx/JaxGL) we made for Kinetix. Finally, see our [docs](./docs/README.md) for more information and more in-depth examples.
+You can play with Kinetix in our [online editor](https://kinetix-env.github.io/gallery.html?editor=true), or have a look at the JAX [physics engine](https://github.com/MichaelTMatthews/Jax2D) and [graphics library](https://github.com/FLAIROx/JaxGL) we made for Kinetix. Finally, see our [docs](./docs/README.md) for more information and more in-depth examples.
 
 <p align="middle">
   <img src="images/bb.gif" width="200" />
