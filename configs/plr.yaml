@@ -6,12 +6,12 @@ defaults:
   - misc: misc
   - env_size: s
   - eval: s
-  - eval_env_size: s
   - ued: plr
   - train_levels: random
   - model: 
     - model-base
     - model-transformer
+    - model-perm-invariant-mlp
   - _self_
 
 seed: 0

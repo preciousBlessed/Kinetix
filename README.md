@@ -1,10 +1,12 @@
 <p align="middle">
-  <img src="images/kinetix_logo.gif" width="500" />
+  <img src="https://raw.githubusercontent.com/FlairOX/Kinetix/main/images/kinetix_logo.gif" width="500" />
 </p>
 
 <p align="center">
         <a href= "https://pypi.org/project/jax2d/">
         <img src="https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue" /></a>
+        <a href= "https://pypi.org/project/kinetix-env/">
+        <img src="https://img.shields.io/badge/pypi-1.0.0-green" /></a>
        <a href= "https://github.com/FLAIROx/Kinetix/blob/main/LICENSE">
         <img src="https://img.shields.io/badge/License-MIT-yellow" /></a>
        <a href= "https://github.com/psf/black">
@@ -27,14 +29,14 @@ We use Kinetix to investigate the training of large, general reinforcement learn
 You can play with Kinetix in our [online editor](https://kinetix-env.github.io/gallery.html?editor=true), or have a look at the JAX [physics engine](https://github.com/MichaelTMatthews/Jax2D) and [graphics library](https://github.com/FLAIROx/JaxGL) we made for Kinetix. Finally, see our [docs](./docs/README.md) for more information and more in-depth examples.
 
 <p align="middle">
-  <img src="images/bb.gif" width="200" />
-  <img src="images/cartpole.gif" width="200" />
-  <img src="images/grasper.gif" width="200" />
+  <img src="https://raw.githubusercontent.com/FlairOX/Kinetix/main/images/bb.gif" width="200" />
+  <img src="https://raw.githubusercontent.com/FlairOX/Kinetix/main/images/cartpole.gif" width="200" />
+  <img src="https://raw.githubusercontent.com/FlairOX/Kinetix/main/images/grasper.gif" width="200" />
 </p>
 <p align="middle">
-  <img src="images/hc.gif" width="200" />
-  <img src="images/hopper.gif" width="200" />
-  <img src="images/ll.gif" width="200" />
+  <img src="https://raw.githubusercontent.com/FlairOX/Kinetix/main/images/hc.gif" width="200" />
+  <img src="https://raw.githubusercontent.com/FlairOX/Kinetix/main/images/hopper.gif" width="200" />
+  <img src="https://raw.githubusercontent.com/FlairOX/Kinetix/main/images/ll.gif" width="200" />
 </p>
 
 <p align="middle">
@@ -50,14 +52,14 @@ Every task has the same goal: make the <span style="color:green">green</span> an
 The agent can act through applying torque via motors and force via thrusters.
 
 <p align="middle">
-  <img src="images/random_1.gif" width="200" />
-  <img src="images/random_5.gif" width="200" />
-  <img src="images/random_3.gif" width="200" />
+  <img src="https://raw.githubusercontent.com/FlairOX/Kinetix/main/images/random_1.gif" width="200" />
+  <img src="https://raw.githubusercontent.com/FlairOX/Kinetix/main/images/random_5.gif" width="200" />
+  <img src="https://raw.githubusercontent.com/FlairOX/Kinetix/main/images/random_3.gif" width="200" />
 </p>
 <p align="middle">
-  <img src="images/random_4.gif" width="200" />
-  <img src="images/random_6.gif" width="200" />
-  <img src="images/random_7.gif" width="200" />
+  <img src="https://raw.githubusercontent.com/FlairOX/Kinetix/main/images/random_4.gif" width="200" />
+  <img src="https://raw.githubusercontent.com/FlairOX/Kinetix/main/images/random_6.gif" width="200" />
+  <img src="https://raw.githubusercontent.com/FlairOX/Kinetix/main/images/random_7.gif" width="200" />
 </p>
 
 <p align="middle">
@@ -68,14 +70,14 @@ We then investigate the transfer capabilities of this agent to unseen handmade l
 We find that the agent can zero-shot simple physics problems, but still struggles with harder tasks.
 
 <p align="middle">
-  <img src="images/general_1.gif" width="200" />
-  <img src="images/general_2.gif" width="200" />
-  <img src="images/general_3.gif" width="200" />
+  <img src="https://raw.githubusercontent.com/FlairOX/Kinetix/main/images/general_1.gif" width="200" />
+  <img src="https://raw.githubusercontent.com/FlairOX/Kinetix/main/images/general_2.gif" width="200" />
+  <img src="https://raw.githubusercontent.com/FlairOX/Kinetix/main/images/general_3.gif" width="200" />
 </p>
 <p align="middle">
-  <img src="images/general_4.gif" width="200" />
-  <img src="images/general_5.gif" width="200" />
-  <img src="images/general_6.gif" width="200" />
+  <img src="https://raw.githubusercontent.com/FlairOX/Kinetix/main/images/general_4.gif" width="200" />
+  <img src="https://raw.githubusercontent.com/FlairOX/Kinetix/main/images/general_5.gif" width="200" />
+  <img src="https://raw.githubusercontent.com/FlairOX/Kinetix/main/images/general_6.gif" width="200" />
 </p>
 
 <p align="middle">
@@ -85,36 +87,39 @@ We find that the agent can zero-shot simple physics problems, but still struggle
 
 # 📜 Basic Usage
 
-Kinetix follows the interfaces established in [gymnax](https://github.com/RobertTLange/gymnax) and [jaxued](https://github.com/DramaCow/jaxued):
+Kinetix follows the interface established in [gymnax](https://github.com/RobertTLange/gymnax):
 
 ```python
 # Use default parameters
 env_params = EnvParams()
 static_env_params = StaticEnvParams()
-ued_params = UEDParams()
 
 # Create the environment
-env = make_kinetix_env_from_args(
-    obs_type="pixels",
-    action_type="multidiscrete",
-    reset_type="replay",
-    static_env_params=static_env_params,
+env = make_kinetix_env(
+  observation_type=ObservationType.PIXELS,
+  action_type=ActionType.CONTINUOUS,
+  reset_fn=make_reset_fn_sample_kinetix_level(env_params, static_env_params),
+  env_params=env_params,
+  static_env_params=static_env_params,
 )
 
-# Sample a random level
-rng = jax.random.PRNGKey(0)
-rng, _rng = jax.random.split(rng)
-level = sample_kinetix_level(_rng, env.physics_engine, env_params, static_env_params, ued_params)
+# Reset the environment state (this resets to a random level)
+_rngs = jax.random.split(jax.random.PRNGKey(0), 3)
 
-# Reset the environment state to this level
-rng, _rng = jax.random.split(rng)
-obs, env_state = env.reset_to_level(_rng, level, env_params)
+obs, env_state = env.reset(_rngs[0], env_params)
 
 # Take a step in the environment
-rng, _rng = jax.random.split(rng)
-action = env.action_space(env_params).sample(_rng)
-rng, _rng = jax.random.split(rng)
-obs, env_state, reward, done, info = env.step(_rng, env_state, action, env_params)
+action = env.action_space(env_params).sample(_rngs[1])
+obs, env_state, reward, done, info = env.step(_rngs[2], env_state, action, env_params)
+
+# Render environment
+renderer = make_render_pixels(env_params, env.static_env_params)
+
+pixels = renderer(env_state)
+
+plt.imshow(pixels.astype(jnp.uint8).transpose(1, 0, 2)[::-1])
+plt.show()
+
 ```
 
 
@@ -123,9 +128,14 @@ To install Kinetix with a CUDA-enabled JAX backend (tested with python3.10):
 ```commandline
 git clone https://github.com/FlairOx/Kinetix.git
 cd Kinetix
-pip install -e .
+pip install -e ".[dev]"
 pre-commit install
 ```
+
+> [!TIP]
+> Setting `export JAX_COMPILATION_CACHE_DIR="$HOME/.jax_cache"` in your `~/.bashrc` helps improve usability by caching the jax compiles.
+
+Kinetix is also available on [PyPi](https://pypi.org/project/kinetix-env/), and can be installed using `pip install kinetix-env`
 
 # 🎯 Editor
 We recommend using the [KinetixJS editor](https://kinetix-env.github.io/gallery.html?editor=true), but also provide a native (less polished) Kinetix editor.
@@ -156,8 +166,8 @@ python3 experiments/plr.py
 python3 experiments/ppo.py
 ```
 
-We use [hydra](https://hydra.cc/) for managing our configs.  See the `configs/` folder for all the hydra configs that will be used by default.
-If you want to run experiments with different configurations, you can either edit these configs or pass command line arguments as so:
+We use [hydra](https://hydra.cc/) for managing our configs.  See the `configs/` folder for all the hydra configs that will be used by default, or the [docs](./docs/configs.md).
+If you want to run experiments with different configurations, you can either edit these configs or pass command line arguments as follows:
 
 ```commandline
 python3 experiments/sfl.py model.transformer_depth=8
@@ -180,25 +190,26 @@ python3 experiments/ppo.py train_levels=random
 ### Training on a single hand-designed level
 
 > [!NOTE]
-> Check the `worlds/` folder for handmade levels for each size category. By default, the loading functions require a relative path to the `worlds/` directory
+> Check the `kinetix/levels/` folder for handmade levels for each size category. By default, the loading functions require a relative path to the `kinetix/levels/` directory
 
 ```commandline
 python3 experiments/ppo.py train_levels=s train_levels.train_levels_list='["s/h4_thrust_aim.json"]'
 ```
 ### Training on a set of hand-designed levels
 ```commandline
-python3 experiments/ppo.py train_levels=s env_size=s eval_env_size=s
-# python3 experiments/ppo.py train_levels=m env_size=m  eval_env_size=m
-# python3 experiments/ppo.py train_levels=l env_size=l  eval_env_size=l
+python3 experiments/ppo.py train_levels=s env_size=s eval=eval_auto
+# python3 experiments/ppo.py train_levels=m env_size=m eval=eval_auto
+# python3 experiments/ppo.py train_levels=l env_size=l eval=eval_auto
 ```
 
 Or, on a custom set:
 ```commandline
-python3 experiments/ppo.py train_levels=l eval_env_size=l env_size=l train_levels.train_levels_list='["s/h2_one_wheel_car","l/h11_obstacle_avoidance"]'
+python3 experiments/ppo.py eval=eval_auto train_levels=l env_size=l train_levels.train_levels_list='["s/h2_one_wheel_car","l/h11_obstacle_avoidance"]'
 ```
 
 # ❌ Errata
 - The left wall was erroneously misplaced 5cm to the left in all levels and all experiments in the paper (each level is a square with side lengths of 5 metres). This error has been fixed in the latest version of Jax2D, but we have pinned Kinetix to the old version for consistency and reproducability with the original paper.
+Further improvements have been made, so if you wish to reproduce the paper's results, please use kinetix version 0.1.0, which is tagged on github.
 
 # 🔎 See Also
 - 🌐 [Kinetix.js](https://github.com/Michael-Beukman/Kinetix.js) Kinetix reimplemented in Javascript, with a live demo [here](https://kinetix-env.github.io/gallery.html?editor=true).
@@ -206,16 +217,19 @@ python3 experiments/ppo.py train_levels=l eval_env_size=l env_size=l train_level
 - 👨‍💻 [JaxGL](https://github.com/FLAIROx/JaxGL) The graphics library we made for Kinetix.
 - 📋 [Our Paper](https://arxiv.org/abs/2410.23208) for more details and empirical results.
 
+# 🙏 Acknowledgements
+The permutation invariant MLP model that is now default was added by [Anya Sims](https://github.com/anyasims).
+Thanks to [Thomas Foster](https://github.com/thomfoster) for fixing some macOS specific issues.
+We'd also like to thank to Thomas Foster, Alex Goldie, Matthew Jackson, Sebastian Towers and Andrei Lupu for useful feedback.
+
 # 📚 Citation
-Please cite Kinetix it as follows:
+If you use Kinetix in your work, please cite it as follows:
 ```
 @article{matthews2024kinetix,
       title={Kinetix: Investigating the Training of General Agents through Open-Ended Physics-Based Control Tasks}, 
       author={Michael Matthews and Michael Beukman and Chris Lu and Jakob Foerster},
-      year={2024},
-      eprint={2410.23208},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG},
-      url={https://arxiv.org/abs/2410.23208}, 
+      booktitle={The Thirteenth International Conference on Learning Representations},
+      year={2025},
+      url={https://arxiv.org/abs/2410.23208}
 }
 ```

@@ -1,81 +1,24 @@
-from functools import partial
-import json
 import os
-import re
-import time
-from enum import IntEnum
+from posixpath import isabs
+from functools import partial
 from typing import Tuple
+import typing
 
 import chex
 import jax
 import jax.numpy as jnp
-import numpy as np
-import optax
-import orbax.checkpoint as ocp
-from flax import core, struct
-from flax.training.train_state import TrainState as BaseTrainState
-
-import wandb
-from jaxued.environments.underspecified_env import EnvParams, EnvState, Observation, UnderspecifiedEnv
-from jaxued.level_sampler import LevelSampler
-from jaxued.utils import compute_max_returns, max_mc, positive_value_loss
-
-from kinetix.environment.env import PixelObservations, make_kinetix_env_from_name
-from kinetix.environment.env_state import StaticEnvParams
-from kinetix.environment.utils import permute_pcg_state
-from kinetix.environment.wrappers import (
-    UnderspecifiedToGymnaxWrapper,
-    LogWrapper,
-    DenseRewardWrapper,
-    AutoReplayWrapper,
-)
-from kinetix.models import make_network_from_config
-from kinetix.pcg.pcg import env_state_to_pcg_state
-from kinetix.render.renderer_pixels import make_render_pixels
-from kinetix.models.actor_critic import ScannedRNN
-from kinetix.util.saving import (
-    expand_pcg_state,
-    get_pcg_state_from_json,
-    load_pcg_state_pickle,
-    load_world_state_pickle,
-    stack_list_of_pytrees,
-    import_env_state_from_json,
-    load_from_json_file,
-)
 from flax.training.train_state import TrainState
 
-BASE_DIR = "worlds"
+from gymnax import EnvParams, EnvState
+from gymnax.environments.environment import Environment
+from kinetix.models.actor_critic import ScannedRNN
 
-DEFAULT_EVAL_LEVELS = [
-    "easy.cartpole",
-    "easy.flappy_bird",
-    "easy.unicycle",
-    "easy.car_left",
-    "easy.car_right",
-    "easy.pinball",
-    "easy.swing_up",
-    "easy.thruster",
-]
-
-
-def get_eval_levels(eval_levels, static_env_params):
-    should_permute = [".permute" in l for l in eval_levels]
-    eval_levels = [re.sub(r"\.permute\d+", "", l) for l in eval_levels]
-    ls = [get_pcg_state_from_json(os.path.join(BASE_DIR, l + ("" if l.endswith(".json") else ".json"))) for l in eval_levels]
-    ls = [expand_pcg_state(l, static_env_params) for l in ls]
-    new_ls = []
-    rng = jax.random.PRNGKey(0)
-    for sp, l in zip(should_permute, ls):
-        rng, _rng = jax.random.split(rng)
-        if sp:
-            l = permute_pcg_state(_rng, l, static_env_params)
-        new_ls.append(l)
-    return stack_list_of_pytrees(new_ls)
+Observation = typing.Any
 
 
 def evaluate_rnn(  # from jaxued
     rng: chex.PRNGKey,
-    env: UnderspecifiedEnv,
+    env: Environment,
     env_params: EnvParams,
     train_state: TrainState,
     init_hstate: chex.ArrayTree,
@@ -89,7 +32,7 @@ def evaluate_rnn(  # from jaxued
 
     Args:
         rng (chex.PRNGKey):
-        env (UnderspecifiedEnv):
+        env (Environment):
         env_params (EnvParams):
         train_state (TrainState):
         init_hstate (chex.ArrayTree): Shape (num_levels, )
@@ -110,8 +53,12 @@ def evaluate_rnn(  # from jaxued
         hstate, pi, _ = train_state.apply_fn(train_state.params, hstate, x)
         action = pi.sample(seed=rng_action).squeeze(0)
 
-        obs, next_state, reward, done, info = jax.vmap(env.step, in_axes=(0, 0, 0, None))(
-            jax.random.split(rng_step, num_levels), state, action, env_params
+        obs, next_state, reward, done, info = jax.vmap(env.step, in_axes=(0, 0, 0, None, 0))(
+            jax.random.split(rng_step, num_levels),
+            state,
+            action,
+            env_params,
+            init_env_state,  # use this to reset to the init env state, keyword arguments are not easily vmappable
         )
 
         next_mask = mask & ~done
@@ -146,7 +93,7 @@ def evaluate_rnn(  # from jaxued
 
 def general_eval(
     rng: chex.PRNGKey,
-    eval_env: UnderspecifiedEnv,
+    eval_env: Environment,
     env_params: EnvParams,
     train_state: TrainState,
     levels: EnvState,
@@ -160,8 +107,8 @@ def general_eval(
     It returns (states, cum_rewards, episode_lengths), with shapes (num_steps, num_eval_levels, ...), (num_eval_levels,), (num_eval_levels,)
     """
     rng, rng_reset = jax.random.split(rng)
-    init_obs, init_env_state = jax.vmap(eval_env.reset_to_level, (0, 0, None))(
-        jax.random.split(rng_reset, num_levels), levels, env_params
+    init_obs, init_env_state = jax.vmap(eval_env.reset, (0, None, 0))(
+        jax.random.split(rng_reset, num_levels), env_params, levels
     )
     init_hstate = ScannedRNN.initialize_carry(num_levels)
     (states, rewards, done_idx, episode_lengths, infos), (dones, reward) = evaluate_rnn(
@@ -232,7 +179,7 @@ def compute_gae(
 
 def sample_trajectories_rnn(
     rng: chex.PRNGKey,
-    env: UnderspecifiedEnv,
+    env: Environment,
     env_params: EnvParams,
     train_state: TrainState,
     init_hstate: chex.ArrayTree,
@@ -250,7 +197,7 @@ def sample_trajectories_rnn(
     Args:
 
         rng (chex.PRNGKey): Singleton
-        env (UnderspecifiedEnv):
+        env (Environment):
         env_params (EnvParams):
         train_state (TrainState): Singleton
         init_hstate (chex.ArrayTree): This is the init RNN hidden state, has to have shape (NUM_ENVS, ...)
@@ -274,8 +221,8 @@ def sample_trajectories_rnn(
         log_prob = pi.log_prob(action)
         value, action, log_prob = jax.tree.map(lambda x: x.squeeze(0), (value, action, log_prob))
 
-        next_obs, env_state, reward, done, info = jax.vmap(env.step, in_axes=(0, 0, 0, None))(
-            jax.random.split(rng_step, num_envs), env_state, action, env_params
+        next_obs, env_state, reward, done, info = jax.vmap(env.step, in_axes=(0, 0, 0, None, 0))(
+            jax.random.split(rng_step, num_envs), env_state, action, env_params, init_env_state
         )
 
         carry = (rng, train_state, hstate, next_obs, env_state, done)
@@ -394,9 +341,10 @@ def update_actor_critic_rnn(
     return jax.lax.scan(update_epoch, (rng, train_state), None, n_epochs)
 
 
-@partial(jax.jit, static_argnums=(0, 2, 8, 9))
+# Cannot jit outside otherwise jax errors with trying to hash a tracer.
+# @partial(jax.jit, static_argnums=(0, 2, 8, 9))
 def sample_trajectories_and_learn(
-    env: UnderspecifiedEnv,
+    env: Environment,
     env_params: EnvParams,
     config: dict,
     rng: chex.PRNGKey,
@@ -430,7 +378,7 @@ def sample_trajectories_and_learn(
     What is returns is a new carry (rng, train_state, init_obs, init_env_state), and concatenated rollouts. The shape of the rollouts are config['num_steps'] * config['outer_rollout_steps']. In other words, the trajectories returned by this function are the same as if we ran rollouts for config['num_steps'] * config['outer_rollout_steps'] steps, but the agent does perform PPO updates in between.
 
     Args:
-        env (UnderspecifiedEnv):
+        env (Environment):
         env_params (EnvParams):
         config (dict):
         rng (chex.PRNGKey):
@@ -447,6 +395,7 @@ def sample_trajectories_and_learn(
         )
     """
 
+    @jax.jit
     def single_step(carry, _):
         rng, train_state, init_hstate, init_obs, init_env_state = carry
         ((rng, train_state, new_hstate, last_obs, last_env_state, last_value), traj,) = sample_trajectories_rnn(
@@ -489,15 +438,19 @@ def sample_trajectories_and_learn(
             step += (states,)
         return new_carry, step
 
-    carry = (rng, train_state, init_hstate, init_obs, init_env_state)
-    new_carry, all_rollouts = jax.lax.scan(single_step, carry, None, length=config["outer_rollout_steps"])
+    @jax.jit
+    def inner(rng, train_state, init_hstate, init_obs, init_env_state):
+        carry = (rng, train_state, init_hstate, init_obs, init_env_state)
+        new_carry, all_rollouts = jax.lax.scan(single_step, carry, None, length=config["outer_rollout_steps"])
 
-    all_rollouts = jax.tree_util.tree_map(lambda x: jnp.concatenate(x, axis=0), all_rollouts)
-    return new_carry, all_rollouts
+        all_rollouts = jax.tree_util.tree_map(lambda x: jnp.concatenate(x, axis=0), all_rollouts)
+        return new_carry, all_rollouts
+
+    return inner(rng, train_state, init_hstate, init_obs, init_env_state)
 
 
 def no_op_rollout(
-    env: UnderspecifiedEnv,
+    env: Environment,
     env_params: EnvParams,
     rng: chex.PRNGKey,
     init_obs: Observation,
@@ -519,8 +472,8 @@ def no_op_rollout(
         else:
             action = zero_action
 
-        next_obs, env_state, reward, done, info = jax.vmap(env.step, in_axes=(0, 0, 0, None))(
-            jax.random.split(rng_step, num_envs), env_state, action, env_params
+        next_obs, env_state, reward, done, info = jax.vmap(env.step, in_axes=(0, 0, 0, None, 0))(
+            jax.random.split(rng_step, num_envs), env_state, action, env_params, init_env_state
         )
 
         carry = (rng, next_obs, env_state, done)
@@ -548,7 +501,7 @@ def no_op_rollout(
 
 
 def no_op_and_random_rollout(
-    env: UnderspecifiedEnv,
+    env: Environment,
     env_params: EnvParams,
     rng: chex.PRNGKey,
     init_obs: Observation,

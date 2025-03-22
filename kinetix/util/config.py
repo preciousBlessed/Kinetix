@@ -3,21 +3,20 @@ import datetime
 import gzip
 import json
 import os
+from collections import defaultdict
 from hashlib import md5
+from typing import List, Tuple
 
 import jax
 import jax.numpy as jnp
 import numpy as np
-from numpy import isin
-from kinetix.environment.ued.ued_state import UEDParams
 from omegaconf import OmegaConf
-from pandas import isna
-from typing import List, Tuple
+
 import wandb
 from kinetix.environment.env_state import EnvParams, StaticEnvParams
-from collections import defaultdict
-
-from kinetix.util.saving import load_from_json_file
+from kinetix.environment.ued.ued_state import UEDParams
+from kinetix.environment.utils import ActionType, ObservationType
+from kinetix.util.saving import get_correct_path_of_json_level, load_from_json_file
 
 
 def get_hash_without_seed(config):
@@ -35,11 +34,11 @@ def get_date() -> str:
 def generate_params_from_config(config):
     if config.get("env_size_type", "predefined") == "custom":
         # must load env params from a file
-        _, static_env_params, env_params = load_from_json_file(os.path.join("worlds", config["custom_path"]))
+        _, static_env_params, env_params = load_from_json_file(config["custom_path"])
         return env_params, static_env_params.replace(
             frame_skip=config["frame_skip"],
         )
-    env_params = EnvParams()
+    env_params = EnvParams().replace(dense_reward_scale=config["dense_reward_scale"])
 
     static_env_params = StaticEnvParams().replace(
         num_polygons=config["num_polygons"],
@@ -52,17 +51,6 @@ def generate_params_from_config(config):
     )
 
     return env_params, static_env_params
-
-
-def generate_ued_params_from_config(config) -> UEDParams:
-    ans = UEDParams()
-
-    if config["env_size_name"] == "s":
-        ans = ans.replace(add_shape_n_proposals=1)  # otherwise we get a very weird XLA bug.
-    if "fixate_chance_max" in config:
-        print("Changing fixate chance max to", config["fixate_chance_max"])
-        ans = ans.replace(fixate_chance_max=config["fixate_chance_max"])
-    return ans
 
 
 def get_eval_level_groups(eval_levels: List[str]) -> List[Tuple[str, str]]:
@@ -103,9 +91,15 @@ def normalise_config(config, name, editor_config=False):
             assert kk not in config, kk
             config[kk] = vv
 
+    config["observation_type_str"] = config["observation_type"]
+    config["observation_type"] = ObservationType.from_string(config["observation_type"])
+    config["action_type_str"] = config["action_type"]
+    config["action_type"] = ActionType.from_string(config["action_type"])
     if not editor_config:
-        config["eval_env_size_true"] = config["eval_env_size"]
-        if config["num_train_envs"] == 2048 and "Pixels" in config["env_name"]:
+        config[
+            "env_name"
+        ] = f"Kinetix-{config['observation_type_str'].title().replace('_', '')}-{config['action_type_str'].title().replace('_', '')}"
+        if config["num_train_envs"] == 2048 and config["observation_type"] == ObservationType.PIXELS:
             config["num_train_envs"] = 512
         if "SFL" in name and config["env_size_name"] in ["m", "l"]:
             config["eval_num_attempts"] = 6  # to avoid a very weird XLA bug.

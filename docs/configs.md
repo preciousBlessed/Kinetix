@@ -25,11 +25,11 @@ defaults:
     - ppo-rnn
   - misc: misc
   - eval: s
-  - eval_env_size: s
   - train_levels: random
   - model:
     - model-base
     - model-transformer
+    - model-perm-invariant-mlp
   - _self_
 seed: 0
 ```
@@ -39,14 +39,16 @@ seed: 0
 This controls the environment to be used.
 #### Preset Options
 We provide two options in `configs/env`, namely `entity` and `symbolic`; each of these can be used by running `python3 experiments/ppo.py env=symbolic` or `python3 experiments/ppo.py env=entity`. If you wish to customise the options further, you can add any of the following subkeys (e.g. by running `python3 experiments/ppo.py env=symbolic env.dense_reward_scale=0.0`):
+
 #### Individual Subkeys
-- `env.env_name`: The name of the environment, with controls the observation and action space.
+- `env.action_type`: "multi_discrete" or "continuous"
+- `env.observation_type`: "pixels", "symbolic_flat", "symbolic_entity" or "symbolic_flat_padded"
 - `env.dense_reward_scale`: How large the dense reward scale is, set this to zero to disable dense rewards.
 - `env.frame_skip`: The number of frames to skip, setting this to 2 (the default) seems to perform better.
 ### Env Size
 This controls the maximum number of shapes present in the simulation. This has two important tradeoffs, namely speed and representational power: Small environments run much faster but some complex environments require a large number of shapes. See `configs/env_size`
 #### Preset Options
-- `s`: The `small` preset
+- `s`: The `Small` preset
 - `m`: `Medium` preset
 - `l`: `Large` preset
 - `custom`: Allows the use of a custom environment size loaded from a json file (see [here](#train-levels) for more).
@@ -102,19 +104,17 @@ There are a plethora of miscellaneous options that are grouped under the `misc` 
 - `wandb_entity`: Wandb entity, leave as `null` to use your default one
 - `wandb_mode` : Wandb mode
 - `video_frequency`: How often to log videos (they are quite large)
-- `load_from_checkpoint`: WWandb artifact path to load from
+- `load_from_checkpoint`: Wandb artifact path to load from
 - `load_only_params`: Whether to load just the network parameters or entire train state.
 - `checkpoint_save_freq`: How often to log checkpoits
 - `checkpoint_human_numbers`: Should the checkpoints have human-readable timestep numbers
-- `load_legacy_checkpoint`: Do not use
-- `load_train_levels_legacy`: Do not use
 - `economical_saving`: If true, only saves a few important checkpoints for space conservation purposes.
 ### Eval
 This option (see `configs/eval`) controls how evaluation works, and what levels are used.
 #### Preset Options
-- `s`: Eval on the `s` hand-designed levels located in `worlds/s`
-- `m`: Eval on the `m` hand-designed levels located in `worlds/m`
-- `l`: Eval on the `l` hand-designed levels located in `worlds/l`
+- `s`: Eval on the `s` hand-designed levels located in `kinetix/levels/s`
+- `m`: Eval on the `m` hand-designed levels located in `kinetix/levels/m`
+- `l`: Eval on the `l` hand-designed levels located in `kinetix/levels/l`
 - `eval_all`: Eval on all of the hand-designed eval levels
 - `eval_auto`: If `train_levels` is not random, evaluate on the training levels.
 - `mujoco`: Eval on the recreations of the mujoco tasks.
@@ -142,26 +142,28 @@ Which levels to train on.
 - `random`: Train on random levels
 #### Individual Subkeys
 - `train_level_mode`: "random" or "list"
-- `train_level_distribution`: if train_level_mode=random, this controls which distribution to use. By default `distribution_v3`
 - `train_levels_list`: This is a list of levels to train on.
 ### Model
 This controls the model architecture and options associated with that.
 #### Preset Options
-We use both of the following:
+We use all of the following:
 - `model-base`
 - `model-entity`
+- `model-perm-invariant-mlp`
 #### Individual Subkeys
 `fc_layer_depth`: How many layers in the FC model
 `fc_layer_width`: How wide is each FC layer
 `activation`: NN activation
 `recurrent_model`: Whether or not to use recurrence
-The following are just relevant when using `env=entity`
+The following are just relevant when using `env.observation_type=symbolic_entity`
 `transformer_depth`: How many transformer layers to use
 `transformer_size`: How large are the KQV vectors
 `transformer_encoder_size`: How large are the initial embeddings
 `num_heads`: How many heads, must be a multiple of 4 and divide `transformer_size` evenly.
 `full_attention_mask`: If true, all heads use the full attention mask
 `aggregate_mode`: `dummy_and_mean` works well.
+The following are used when `env.observation_type=symbolic_flat_padded`
+- `symbolic_embedding_dim`: How large the embedding is.
 ### UED
 Options pertaining to UED (i.e., when using the scripts `plr.py` or `sfl.py`)
 #### Preset Options
