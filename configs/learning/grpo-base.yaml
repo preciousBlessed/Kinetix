@@ -20,12 +20,8 @@ filter_levels: true
 level_filter_n_steps: 64
 level_filter_sample_ratio: 2
 
-# GRPO-specific parameters
-# group_size: 64  # Size of advantage normalization groups
-# group_norm_epsilon: 1e-8  # Small constant for numerical stability
-
 # grpo-base.yaml
-group_size: 64  # Balanced choice
+group_size: 128  # Balanced choice
 group_norm_epsilon: 1e-6
 use_mixed_precision: true  # If using GPU
 grpo_beta : 0.01
