@@ -1,5 +1,8 @@
 #!/bin/bash
 
+
+
+
 echo "=== Checking NVIDIA GPU status ==="
 nvidia-smi
 
@@ -21,6 +24,11 @@ pip install --upgrade "jax[cuda12]" -f https://storage.googleapis.com/jax-releas
 echo "=== Moving into Kinetix directory ==="
 cd Kinetix || { echo "Kinetix folder not found!"; exit 1; }
 
+echo "=== Setting Git Status ==="
+
+git config --global user.email "preciousblessed1000@gmail.com"
+git config --global user.name "preciousBlessed"
+
 echo "=== Installing Python dependencies from requirements.txt ==="
 pip install -r requirements.txt
 
@@ -31,4 +39,4 @@ echo "=== Installing and setting up pre-commit hooks ==="
 pip install pre-commit
 pre-commit install
 
-echo "=== ✅ Installation completed successfully ==="
+echo "=== ✅ Installation completed successfully and git setups initialized ==="
