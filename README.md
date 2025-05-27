@@ -18,7 +18,7 @@
         <a href= "./docs/README.md">
         <img src="https://img.shields.io/badge/docs-green" /></a>
         <a href= "https://api.wandb.ai/links/chukwuezi-tochukwu-african-institute-for-mathematical-sc/cn373t8p">
-        <img src="https://drive.google.com/file/d/1UtIOngfYekV_VVssRVEuu6T06dt9Iu8F/view?usp=sharing" /></a>
+        <img src="https://raw.githubusercontent.com/wandb/assets/main/wandb-github-badge-28.svg" /></a>
 </p>
 
 ### <b>Update: Kinetix was accepted at ICLR 2025 as an oral!</b>
