@@ -25,6 +25,7 @@ level_filter_sample_ratio: 2
 # group_norm_epsilon: 1e-8  # Small constant for numerical stability
 
 # grpo-base.yaml
-group_size: 128  # Balanced choice
+group_size: 64  # Balanced choice
 group_norm_epsilon: 1e-6
 use_mixed_precision: true  # If using GPU
+grpo_beta : 0.01
