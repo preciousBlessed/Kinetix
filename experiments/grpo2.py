@@ -294,12 +294,6 @@ def make_train(config, env_params, static_env_params):
                         kl = (log_prob - ref_log_prob).mean()
 
                         # --- TOTAL GRPO LOSS ---
-                        # total_loss = (
-                        #     loss_actor
-                        #     + config["vf_coef"] * value_loss
-                        #     - config["ent_coef"] * entropy
-                        #     + config["grpo_beta"] * kl
-                        # )
                         total_loss = (
                             loss_actor
                             + config["vf_coef"] * value_loss
