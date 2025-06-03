@@ -73,7 +73,7 @@ def make_train(config, env_params, static_env_params):
         network_params = network.init(_rng, hstate, init_x)
 
         # REFERENCE NETWORK FOR KL PENALTY
-        reference_network = make_network_from_config(env, env_params, config, value_head=False)
+        reference_network = make_network_from_config(env, env_params, config)
         reference_params = network_params  # Initialize same as current policy
 
         if config["anneal_lr"]:
