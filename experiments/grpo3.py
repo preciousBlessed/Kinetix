@@ -63,7 +63,7 @@ def make_train(config, env_params, static_env_params):
     def train(rng):
         last_time = time.time()
         # INIT NETWORK (No value head)
-        network = make_network_from_config(env, env_params, config, value_head=False)
+        network = make_network_from_config(env, env_params, config)
         rng, _rng = jax.random.split(rng)
         obsv, env_state = jax.vmap(env.reset, (0, None))(jax.random.split(_rng, config["num_train_envs"]), env_params)
         dones = jnp.zeros((config["num_train_envs"]), dtype=jnp.bool_)
