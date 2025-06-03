@@ -28,3 +28,4 @@ level_filter_sample_ratio: 2
 group_size: 128  # Balanced choice
 group_norm_epsilon: 1e-6
 use_mixed_precision: true  # If using GPU
+grpo_beta : 0.04
